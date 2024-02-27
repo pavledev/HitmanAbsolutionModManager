@@ -1,0 +1,14 @@
+{
+    "version": "0.2.1",
+    "defaults": {},
+    "configurations": [
+        {
+            "program": "D:\\SteamLibrary\\steamapps\\common\\Hitman Absolution\\ModManager\\HitmanAbsolutionModManager.exe",
+            "cwd": "D:\\SteamLibrary\\steamapps\\common\\Hitman Absolution",
+            "currentDir": "D:\\SteamLibrary\\steamapps\\common\\Hitman Absolution",
+            "project": "CMakeLists.txt",
+            "projectTarget": "HitmanAbsolutionModManager.exe (Install)",
+            "name": "Hitman Absolution Mod Manager"
+        }
+    ]
+}

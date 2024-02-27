@@ -1,0 +1,8 @@
+{
+    "name": "hitmanabsolutionmodmanager",
+    "version": "1.0.0",
+    "dependencies": [
+        "rapidjson",
+        "libzippp"
+    ]
+}
