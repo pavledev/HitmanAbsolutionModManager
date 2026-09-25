@@ -13,6 +13,7 @@
           ]
       },
       "rapidjson",
-      "libzippp"
+      "libzippp",
+      "spdlog"
     ]
 }

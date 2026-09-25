@@ -3,81 +3,81 @@
 #include <format>
 
 #include "Registry/ResourceIDRegistry.h"
-#include "Logger.h"
+#include "Logging.h"
 
 ResourceIDRegistry& ResourceIDRegistry::GetInstance()
 {
-    static ResourceIDRegistry instance;
+	static ResourceIDRegistry instance;
 
-    return instance;
+	return instance;
 }
 
 void ResourceIDRegistry::Load()
 {
-    std::ifstream ifstream = std::ifstream("assets/HashMap.txt");
+	std::ifstream ifstream = std::ifstream("assets/HashMap.txt");
 
-    if (!ifstream.is_open())
-    {
-        Logger::GetInstance().Log(Logger::Level::Error, "Failed to open HashMap.txt!");
+	if (!ifstream.is_open())
+	{
+		Logger::Error("Failed to open HashMap.txt!");
 
-        return;
-    }
+		return;
+	}
 
-    ifstream.seekg(0, ifstream.end);
+	ifstream.seekg(0, ifstream.end);
 
-    size_t fileSize = static_cast<size_t>(ifstream.tellg());
+	size_t fileSize = static_cast<size_t>(ifstream.tellg());
 
-    ifstream.seekg(0, ifstream.beg);
+	ifstream.seekg(0, ifstream.beg);
 
-    std::vector<char> hashListData = std::vector<char>(fileSize, 0);
-    unsigned int position = 0, lastPosition = 0;
+	std::vector<char> hashListData = std::vector<char>(fileSize, 0);
+	unsigned int position = 0, lastPosition = 0;
 
-    ifstream.read(hashListData.data(), fileSize);
+	ifstream.read(hashListData.data(), fileSize);
 
-    while (true)
-    {
-        if (hashListData.data()[position] == 0xA)
-        {
-            hashListData.data()[position] = 0;
+	while (true)
+	{
+		if (hashListData.data()[position] == 0xA)
+		{
+			hashListData.data()[position] = 0;
 
-            std::string line = std::string(&hashListData.data()[lastPosition]);
+			std::string line = std::string(&hashListData.data()[lastPosition]);
 
-            unsigned long long hash = std::stoull(line.substr(0, line.find(' ')), nullptr, 16);
-            std::string resourceID = line.substr(line.find(' ') + 1);
+			unsigned long long hash = std::stoull(line.substr(0, line.find(' ')), nullptr, 16);
+			std::string resourceID = line.substr(line.find(' ') + 1);
 
-            resourceIDsToRuntimeResourceIDs.insert(std::make_pair(resourceID, hash));
+			resourceIDsToRuntimeResourceIDs.insert(std::make_pair(resourceID, hash));
 
-            lastPosition = position + 1;
-        }
+			lastPosition = position + 1;
+		}
 
-        position++;
+		position++;
 
-        if (position > fileSize)
-        {
-            break;
-        }
-    }
+		if (position > fileSize)
+		{
+			break;
+		}
+	}
 
-    ifstream.close();
+	ifstream.close();
 
-    isLoaded = true;
+	isLoaded = true;
 
-    Logger::GetInstance().Log(Logger::Level::Info, "Sucessfully loaded hash map.");
+	Logger::Info("Sucessfully loaded hash map.");
 }
 
 unsigned long long ResourceIDRegistry::GetRuntimeResourceID(const std::string& resourceID) const
 {
-    auto it = resourceIDsToRuntimeResourceIDs.find(resourceID);
+	auto it = resourceIDsToRuntimeResourceIDs.find(resourceID);
 
-    if (it != resourceIDsToRuntimeResourceIDs.end())
-    {
-        return it->second;
-    }
+	if (it != resourceIDsToRuntimeResourceIDs.end())
+	{
+		return it->second;
+	}
 
-    return -1;
+	return -1;
 }
 
 const bool ResourceIDRegistry::IsLoaded() const
 {
-    return isLoaded;
+	return isLoaded;
 }

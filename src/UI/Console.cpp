@@ -1,6 +1,6 @@
 #include <format>
 
-#include <IconsMaterialDesign.h>
+#include <IconsMaterialDesignIcons.h>
 
 #include <UI/Console.h>
 #include <ModManager.h>
@@ -14,62 +14,49 @@ Console::Console()
 	infoIconColor = { 97, 177, 254, 255 };
 	autoScrollIconColor = { 0.537f, 0.753f, 0.286f, 1.0f };
 	backgroundColor = { 0.22f, 0.22f, 0.22f, 0.00f };
+
+	showErrors = true;
+	showWarnings = true;
+	showInfo = true;
+	autoScroll = true;
+
 	showErrorButtonBorder = true;
 	showWarningButtonBorder = true;
 	showInfoButtonBorder = true;
 	showAutoScrollButtonBorder = true;
+
 	errorButtonClicked = false;
 	warningButtonClicked = false;
 	infoButtonClicked = false;
 	autoScrollButtonClicked = false;
 }
 
-void Console::Draw()
+void Console::Render()
 {
-	ImGui::PushFont(ModManager::GetInstance().GetImGuiRenderer().GetBoldFont());
+	RenderButtons();
 
-	const bool isWindowVisible = ImGui::Begin(ICON_MD_TOKEN " Console", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar);
+	ImGui::Spacing();
 
-	ImGui::PushFont(ModManager::GetInstance().GetImGuiRenderer().GetRegularFont());
-
-	if (isWindowVisible)
-	{
-		Logger& logger = Logger::GetInstance();
-		const std::vector<Logger::Message> messages = logger.GetMessages();
-
-		RenderButtons(messages);
-
-		ImGui::Text("");
-
-		std::vector<Logger::Message> filteredMessages;
-
-		FilterMessages(messages, filteredMessages);
-		RenderTable(filteredMessages);
-	}
-
-	ImGui::PopFont();
-	ImGui::End();
-	ImGui::PopFont();
+	RenderTable();
 }
 
-void Console::RenderButtons(const std::vector<Logger::Message>& messages)
+void Console::RenderButtons()
 {
-	Logger& logger = Logger::GetInstance();
 	unsigned int errorMessageCount = 0;
 	unsigned int warningMessageCount = 0;
 	unsigned int infoMessageCount = 0;
 
-	for (size_t i = 0; i < messages.size(); ++i)
+	for (size_t i = 0; i < logLines.size(); ++i)
 	{
-		if (messages[i].level == Logger::Level::Error)
+		if (logLines[i].level == spdlog::level::level_enum::err)
 		{
 			++errorMessageCount;
 		}
-		else if (messages[i].level == Logger::Level::Warning)
+		else if (logLines[i].level == spdlog::level::level_enum::warn)
 		{
 			++warningMessageCount;
 		}
-		else if (messages[i].level == Logger::Level::Info)
+		else if (logLines[i].level == spdlog::level::level_enum::info)
 		{
 			++infoMessageCount;
 		}
@@ -99,9 +86,10 @@ void Console::RenderButtons(const std::vector<Logger::Message>& messages)
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0);
 	}
 
-	if (UI::IconButton(ICON_MD_ERROR, errorButtonText.c_str(), errorIconColor, backgroundColor))
+	if (UI::IconButton("  " ICON_MDI_CLOSE_CIRCLE, errorButtonText.c_str(), errorIconColor, backgroundColor))
 	{
 		errorButtonClicked = true;
+		filterDirty = true;
 	}
 
 	if (!showErrorButtonBorder)
@@ -111,6 +99,7 @@ void Console::RenderButtons(const std::vector<Logger::Message>& messages)
 
 	if (errorButtonClicked)
 	{
+		showErrors = !showErrors;
 		showErrorButtonBorder = !showErrorButtonBorder;
 		errorButtonClicked = false;
 	}
@@ -124,9 +113,10 @@ void Console::RenderButtons(const std::vector<Logger::Message>& messages)
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0);
 	}
 
-	if (UI::IconButton(ICON_MD_WARNING, warningButtonText.c_str(), warningIconColor, backgroundColor))
+	if (UI::IconButton("  " ICON_MDI_ALERT, warningButtonText.c_str(), warningIconColor, backgroundColor))
 	{
 		warningButtonClicked = true;
+		filterDirty = true;
 	}
 
 	if (!showWarningButtonBorder)
@@ -136,6 +126,7 @@ void Console::RenderButtons(const std::vector<Logger::Message>& messages)
 
 	if (warningButtonClicked)
 	{
+		showWarnings = !showWarnings;
 		showWarningButtonBorder = !showWarningButtonBorder;
 		warningButtonClicked = false;
 	}
@@ -149,9 +140,10 @@ void Console::RenderButtons(const std::vector<Logger::Message>& messages)
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0);
 	}
 
-	if (UI::IconButton(ICON_MD_INFO, infoButtonText.c_str(), infoIconColor, backgroundColor))
+	if (UI::IconButton("  " ICON_MDI_INFORMATION, infoButtonText.c_str(), infoIconColor, backgroundColor))
 	{
 		infoButtonClicked = true;
+		filterDirty = true;
 	}
 
 	if (!showInfoButtonBorder)
@@ -161,6 +153,7 @@ void Console::RenderButtons(const std::vector<Logger::Message>& messages)
 
 	if (infoButtonClicked)
 	{
+		showInfo = !showInfo;
 		showInfoButtonBorder = !showInfoButtonBorder;
 		infoButtonClicked = false;
 	}
@@ -176,7 +169,7 @@ void Console::RenderButtons(const std::vector<Logger::Message>& messages)
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0);
 	}
 
-	if (UI::IconButton(ICON_MD_ARROW_DOWNWARD, " Auto-scroll ", autoScrollIconColor, backgroundColor))
+	if (UI::IconButton("  " ICON_MDI_ARROW_DOWN, " Auto-scroll ", autoScrollIconColor, backgroundColor))
 	{
 		autoScrollButtonClicked = true;
 	}
@@ -188,6 +181,7 @@ void Console::RenderButtons(const std::vector<Logger::Message>& messages)
 
 	if (autoScrollButtonClicked)
 	{
+		autoScroll = !autoScroll;
 		showAutoScrollButtonBorder = !showAutoScrollButtonBorder;
 		autoScrollButtonClicked = false;
 	}
@@ -196,9 +190,11 @@ void Console::RenderButtons(const std::vector<Logger::Message>& messages)
 	ImGui::Text("");
 	ImGui::SameLine();
 
-	if (UI::IconButton(ICON_MD_CLOSE, " Clear ", errorIconColor, backgroundColor))
+	if (UI::IconButton("  " ICON_MDI_CLOSE, " Clear ", errorIconColor, backgroundColor))
 	{
-		logger.ClearAllMessages();
+		logLines.clear();
+		selectedIds.clear();
+		filterDirty = true;
 	}
 
 	ImGui::SameLine();
@@ -207,186 +203,224 @@ void Console::RenderButtons(const std::vector<Logger::Message>& messages)
 	ImGui::Text("");
 	ImGui::SameLine();
 
-	std::string hint = std::format("{} Search message...", ICON_MD_SEARCH);
+	std::string hint = std::format("{} Search message...", ICON_MDI_MAGNIFY);
 
-	ImGui::PushItemWidth(1000);
-	ImGui::InputTextWithHint("##SearchMessage", hint.c_str(), message, IM_ARRAYSIZE(message));
+	ImGui::PushItemWidth(-1);
+
+	if (ImGui::InputTextWithHint("##SearchMessage", hint.c_str(), searchBuffer, IM_ARRAYSIZE(searchBuffer)))
+	{
+		filterDirty = true;
+	}
+
 	ImGui::PopItemWidth();
 }
 
-void Console::RenderTable(const std::vector<Logger::Message>& messages)
+void Console::RenderTable()
 {
-	static ImGuiTableFlags tableFlags =
-		ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable
-		| ImGuiTableFlags_Borders | ImGuiTableFlags_NoBordersInBody
-		| ImGuiTableFlags_SizingFixedFit;
-	static ImVector<int> selections;
-	static float minRowHeight = 0.0f;
-	static int columnCount = 3;
+	const bool noFilter = showErrors && showWarnings && showInfo && searchBuffer[0] == '\0';
 
-	if (ImGui::BeginTable("Table", columnCount, tableFlags))
+	if (!noFilter && filterDirty)
 	{
-		ImGuiTableColumnFlags columnFlags = ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_NoHide;
+		RebuildFilteredIndices();
+	}
 
-		ImGui::TableSetupColumn("ID", columnFlags | ImGuiTableColumnFlags_WidthFixed);
-		ImGui::TableSetupColumn("Time", columnFlags | ImGuiTableColumnFlags_WidthFixed);
-		ImGui::TableSetupColumn("Message", ImGuiTableColumnFlags_WidthStretch);
+	if (!ImGui::BeginTable(
+		"ConsoleTable",
+		3,
+		ImGuiTableFlags_Resizable |
+		ImGuiTableFlags_Reorderable |
+		ImGuiTableFlags_Hideable |
+		ImGuiTableFlags_Borders |
+		ImGuiTableFlags_NoBordersInBody |
+		ImGuiTableFlags_SizingFixedFit |
+		ImGuiTableFlags_ScrollY))
+	{
+		return;
+	}
 
-		ImGui::TableHeadersRow();
+	ImGui::TableSetupColumn("ID", ImGuiTableColumnFlags_WidthFixed);
+	ImGui::TableSetupColumn("Time", ImGuiTableColumnFlags_WidthFixed);
+	ImGui::TableSetupColumn("Message", ImGuiTableColumnFlags_WidthStretch);
 
-		ImGuiListClipper clipper;
+	ImGui::TableHeadersRow();
 
-		clipper.Begin(messages.size());
+	ImGuiListClipper clipper;
 
-		while (clipper.Step())
+	if (noFilter)
+	{
+		clipper.Begin(static_cast<int32_t>(logLines.size()));
+	}
+	else
+	{
+		clipper.Begin(static_cast<int32_t>(filteredIndices.size()));
+	}
+
+	while (clipper.Step())
+	{
+		for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
 		{
-			for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; ++row)
+			int32_t index = noFilter ? row : filteredIndices[row];
+			const LogLine& log = logLines[index];
+
+			const bool isSelected = selectedIds.contains(log.id);
+			ImVec4 color = GetTextColor(log.level);
+
+			ImGui::PushID(log.id);
+			ImGui::TableNextRow();
+
+			ImGui::TableSetColumnIndex(0);
+
+			char label[32];
+
+			sprintf_s(label, "%zu", log.id);
+
+			ImGui::PushStyleColor(ImGuiCol_Text, color);
+
+			if (ImGui::Selectable(label, isSelected, ImGuiSelectableFlags_SpanAllColumns))
 			{
-				const Logger::Message* message = &messages[row];
-				const bool isItemSelected = selections.contains(message->id);
-				ImVec4 textColor = GetTextColor(message->level);
-
-				ImGui::PushID(message->id);
-				ImGui::TableNextRow(ImGuiTableRowFlags_None, minRowHeight);
-
-				ImGui::TableSetColumnIndex(0);
-
-				char label[32];
-
-				sprintf_s(label, "%d", message->id);
-
-				ImGuiSelectableFlags selectableFlags = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap;
-
-				ImGui::PushStyleColor(ImGuiCol_Text, textColor);
-
-				if (ImGui::Selectable(label, isItemSelected, selectableFlags, ImVec2(0, minRowHeight)))
+				if (ImGui::GetIO().KeyCtrl)
 				{
-					if (ImGui::GetIO().KeyCtrl)
+					if (isSelected)
 					{
-						if (isItemSelected)
-						{
-							selections.find_erase_unsorted(message->id);
-						}
-						else
-						{
-							selections.push_back(message->id);
-						}
+						selectedIds.erase(log.id);
 					}
 					else
 					{
-						selections.clear();
-						selections.push_back(message->id);
+						selectedIds.insert(log.id);
 					}
 				}
-
-				ImGui::PopStyleColor();
-
-				if (ImGui::BeginPopupContextItem("tablePopup"))
+				else
 				{
-					std::string copySelectedMessageLabel = std::format("  {} Copy selected message(s) ", ICON_MD_CONTENT_COPY);
-					std::string copySelectedRowLabel = std::format("  {} Copy selected row(s) ", ICON_MD_CONTENT_COPY);
-					std::string clearMessageLabel = std::format("  {} Clear selected message(s) ", ICON_MD_CLOSE);
+					selectedIds.clear();
+					selectedIds.insert(log.id);
+				}
+			}
 
-					if (ImGui::MenuItem(copySelectedMessageLabel.c_str()))
+			ImGui::PopStyleColor();
+
+			if (ImGui::BeginPopupContextItem())
+			{
+				std::string copySelectedMessageLabel = std::format("  {} Copy selected message(s) ", ICON_MDI_CONTENT_COPY);
+				std::string copySelectedRowLabel = std::format("  {} Copy selected row(s) ", ICON_MDI_CONTENT_COPY);
+				std::string deleteMessageLabel = std::format("  {} Delete selected message(s) ", ICON_MDI_CLOSE);
+
+				if (ImGui::MenuItem(copySelectedMessageLabel.c_str()))
+				{
+					std::string content;
+
+					for (const auto& l : logLines)
 					{
-						std::string content;
-
-						for (int i = 0; i < selections.size(); ++i)
-						{
-							int selection = selections[i];
-
-							content += messages[selection].content + "\n";
-						}
-
-						CopyToClipboard(content);
+						if (selectedIds.contains(l.id))
+							content += l.text + "\n";
 					}
 
-					if (ImGui::MenuItem(copySelectedRowLabel.c_str()))
-					{
-						std::string content;
-
-						for (int i = 0; i < selections.size(); ++i)
-						{
-							int selection = selections[i];
-
-							content += messages[selection].ToString() + "\n";
-						}
-
-						CopyToClipboard(content);
-					}
-
-					if (ImGui::MenuItem(clearMessageLabel.c_str()))
-					{
-						for (int i = 0; i < selections.size(); ++i)
-						{
-							int selection = selections[i];
-
-							Logger::GetInstance().ClearMessage(selection);
-						}
-					}
-
-					ImGui::EndPopup();
+					CopyToClipboard(content);
 				}
 
-				ImGui::TableSetColumnIndex(1);
-				ImGui::TextColored(textColor, message->time.c_str());
+				if (ImGui::MenuItem(copySelectedMessageLabel.c_str()))
+				{
+					std::string content;
 
-				ImGui::TableSetColumnIndex(2);
-				ImGui::TextColored(textColor, message->content.c_str());
+					for (const auto& l : logLines)
+					{
+						if (selectedIds.contains(l.id))
+							content += l.ToString() + "\n";
+					}
 
-				ImGui::PopID();
+					CopyToClipboard(content);
+				}
+
+				if (ImGui::MenuItem(deleteMessageLabel.c_str()))
+				{
+					std::erase_if(logLines, [&](const LogLine& l)
+						{
+							return selectedIds.contains(l.id);
+						});
+
+					selectedIds.clear();
+					filterDirty = true;
+				}
+
+				ImGui::EndPopup();
 			}
-		}
 
-		ImGui::EndTable();
+			ImGui::TableSetColumnIndex(1);
+			ImGui::TextColored(color, "%s", log.time.c_str());
 
-		if (showAutoScrollButtonBorder && ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
-		{
-			ImGui::SetScrollHereY(1.f);
+			ImGui::TableSetColumnIndex(2);
+			ImGui::TextColored(color, "%s", log.text.c_str());
+
+			ImGui::PopID();
 		}
 	}
-}
 
-void Console::FilterMessages(const std::vector<Logger::Message>& messages, std::vector<Logger::Message>& filteredMessages)
-{
-	for (size_t i = 0; i < messages.size(); ++i)
+	if (autoScroll && ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
 	{
-		if (!showErrorButtonBorder && messages[i].level == Logger::Level::Error)
-		{
-			continue;
-		}
-
-		if (!showWarningButtonBorder && messages[i].level == Logger::Level::Warning)
-		{
-			continue;
-		}
-
-		if (!showInfoButtonBorder && messages[i].level == Logger::Level::Info)
-		{
-			continue;
-		}
-
-		if (strcmp(message, "Search Message...") != 0 && !messages[i].content.contains(message))
-		{
-			continue;
-		}
-
-		filteredMessages.push_back(messages[i]);
+		ImGui::SetScrollHereY(1.0f);
 	}
+
+	ImGui::EndTable();
 }
 
-ImColor Console::GetTextColor(const Logger::Level level)
+void Console::AddLogLine(spdlog::level::level_enum level, const std::string& text)
+{
+	logLines.push_back(LogLine{ logLines.size(), level, std::string(text.c_str(), text.size()), GetCurrentTime() });
+
+	filterDirty = true;
+}
+
+bool Console::PassFilter(const LogLine& log) const
+{
+	if (!showErrors && log.level == spdlog::level::err)
+	{
+		return false;
+	}
+
+	if (!showWarnings && log.level == spdlog::level::warn)
+	{
+		return false;
+	}
+
+	if (!showInfo && log.level == spdlog::level::info)
+	{
+		return false;
+	}
+
+	if (searchBuffer[0] != '\0' && !log.text.contains(searchBuffer))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+void Console::RebuildFilteredIndices()
+{
+	filteredIndices.clear();
+
+	for (size_t i = 0; i < logLines.size(); i++)
+	{
+		if (PassFilter(logLines[i]))
+		{
+			filteredIndices.push_back(i);
+		}
+	}
+
+	filterDirty = false;
+}
+
+ImColor Console::GetTextColor(const spdlog::level::level_enum level)
 {
 	switch (level)
 	{
-		case Logger::Level::Info:
+		case spdlog::level::level_enum::info:
 			return infoIconColor;
-		case Logger::Level::Warning:
+		case spdlog::level::level_enum::warn:
 			return warningIconColor;
-		case Logger::Level::Error:
+		case spdlog::level::level_enum::err:
 			return errorIconColor;
 		default:
-			return ImVec4();
+			return ImGui::GetStyleColorVec4(ImGuiCol_Text);
 	}
 }
 
@@ -428,4 +462,18 @@ void Console::CopyToClipboard(const std::string& string)
 
 	SetClipboardData(CF_TEXT, globalData);
 	CloseClipboard();
+}
+
+std::string Console::GetCurrentTime()
+{
+	auto now = std::chrono::system_clock::now();
+	auto time = std::chrono::system_clock::to_time_t(now);
+	std::tm localTime;
+	std::stringstream stringstream;
+
+	localtime_s(&localTime, &time);
+
+	stringstream << std::put_time(&localTime, "%H:%M:%S");
+
+	return stringstream.str();
 }

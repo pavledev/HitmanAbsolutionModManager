@@ -27,6 +27,9 @@
 #include <Hash.h>
 #include <IO/BinaryReader.h>
 #include <Global.h>
+#include <Logging.h>
+
+extern void SetupLogging(spdlog::level::level_enum logLevel);
 
 ModManager::ModManager()
 {
@@ -71,6 +74,12 @@ ModManager& ModManager::GetInstance()
 
 bool ModManager::Setup()
 {
+#if _DEBUG
+	SetupLogging(spdlog::level::trace);
+#else
+	SetupLogging(spdlog::level::info);
+#endif
+
 	wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"Hitman Absolution Mod Manager", nullptr };
 
 	RegisterClassExW(&wc);
@@ -79,11 +88,9 @@ bool ModManager::Setup()
 	int height = GetSystemMetrics(SM_CYSCREEN);
 	hwnd = CreateWindowExW(0, wc.lpszClassName, L"Hitman Absolution Mod Manager", WS_OVERLAPPEDWINDOW, 0, 0, width, height, nullptr, nullptr, wc.hInstance, nullptr);
 
-	Logger& logger = Logger::GetInstance();
-
 	if (!directXRenderer.Setup(hwnd, &wc))
 	{
-		logger.Log(Logger::Level::Error, "Failed to setup DirectX renderer!");
+		Logger::Error("Failed to setup DirectX renderer!");
 
 		return false;
 	}
@@ -93,7 +100,7 @@ bool ModManager::Setup()
 
 	if (!imGuiRenderer.Setup(directXRenderer.GetD3D11Device(), directXRenderer.GetD3D11DeviceContext(), hwnd))
 	{
-		logger.Log(Logger::Level::Error, "Failed to setup ImGui renderer!");
+		Logger::Error("Failed to setup ImGui renderer!");
 
 		return false;
 	}
@@ -200,8 +207,8 @@ void ModManager::RenderContent()
 	ImGuiID rootDockspaceID = ImGui::GetID("RootDockspace");
 	ImGui::DockSpace(rootDockspaceID, ImVec2(0, 0), ImGuiDockNodeFlags_NoCloseButton | ImGuiDockNodeFlags_NoSplit);
 
-	modSelector.Draw();
-	console.Draw();
+	modSelector.Render();
+	console.Render();
 
 	ImGui::End();
 }
@@ -277,7 +284,7 @@ void ModManager::FindAvailableMods()
 	}
 	else
 	{
-		Logger::GetInstance().Log(Logger::Level::Warning, "mods directory not found!");
+		Logger::Warn("Mods directory not found!");
 	}
 }
 
@@ -357,16 +364,6 @@ void ModManager::AddMod(const std::string& modFilePath)
 	}
 
 	zipArchive.close();
-}
-
-const ImGuiRenderer& ModManager::GetImGuiRenderer() const
-{
-	return imGuiRenderer;
-}
-
-const ModSelector& ModManager::GetModSelector() const
-{
-	return modSelector;
 }
 
 void ModManager::GenerateResources(const std::filesystem::path& contentFolderPath)
@@ -588,7 +585,7 @@ const char* ModManager::GetHeaderLibraryResourceID(const std::string& headerLibr
 
 		if (!ifstream.is_open())
 		{
-			Logger::GetInstance().Log(Logger::Level::Error, "Failed to open HeaderLibraries.txt!");
+			Logger::Error("Failed to open HeaderLibraries.txt!");
 
 			return nullptr;
 		}

@@ -9,6 +9,7 @@ set(VCPKG_BUILD_ROOT "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
 find_package(imgui CONFIG REQUIRED)
 find_package(RapidJSON REQUIRED)
 find_package(libzippp REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
 
 file(GLOB_RECURSE SRC_FILES
 	CONFIGURE_DEPENDS
@@ -43,6 +44,7 @@ target_link_libraries(HitmanAbsolutionModManager PUBLIC
 	imgui::imgui
 	rapidjson
 	libzippp::libzippp
+	spdlog::spdlog_header_only
 )
 
 install(TARGETS HitmanAbsolutionModManager

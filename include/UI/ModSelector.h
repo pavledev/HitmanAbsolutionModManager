@@ -8,14 +8,14 @@
 class ModSelector
 {
 private:
-    struct Mod
-    {
-        std::string name;
-        std::string description;
-        bool enabled;
-    };
+	struct Mod
+	{
+		std::string name;
+		std::string description;
+		bool enabled;
+	};
 
 public:
-    void Draw();
-    void EnableSelectedMods();
+	void Render();
+	void EnableSelectedMods();
 };

@@ -4,7 +4,7 @@
 #include <rapidjson/document.h>
 
 #include "Registry/EnumRegistry.h"
-#include "Logger.h"
+#include "Logging.h"
 
 EnumRegistry& EnumRegistry::GetInstance()
 {
@@ -39,7 +39,7 @@ void EnumRegistry::Load()
 		enums.insert(std::make_pair(object["name"].GetString(), items2));
 	}
 
-	Logger::GetInstance().Log(Logger::Level::Info, "Sucessfully loaded enums.");
+	Logger::Info("Sucessfully loaded enums.");
 }
 
 const std::map<int, std::string>& EnumRegistry::GetEnum(const std::string& typeName)

@@ -1,40 +1,40 @@
 #include <Windows.h>
 
 #include "Display.h"
-#include "Logger.h"
+#include "Logging.h"
 
 unsigned int Display::GetWidth()
 {
-    RECT desktop;
-    const HWND hwnd = GetDesktopWindow();
+	RECT desktop;
+	const HWND hwnd = GetDesktopWindow();
 
-    GetWindowRect(hwnd, &desktop);
+	GetWindowRect(hwnd, &desktop);
 
-    return desktop.right;
+	return desktop.right;
 }
 
 unsigned int Display::GetHeight()
 {
-    RECT desktop;
-    const HWND hwnd = GetDesktopWindow();
+	RECT desktop;
+	const HWND hwnd = GetDesktopWindow();
 
-    GetWindowRect(hwnd, &desktop);
+	GetWindowRect(hwnd, &desktop);
 
-    return desktop.bottom;
+	return desktop.bottom;
 }
 
 unsigned int Display::GetRefreshRate()
 {
-    DEVMODE dm;
+	DEVMODE dm;
 
-    dm.dmSize = sizeof(dm);
+	dm.dmSize = sizeof(dm);
 
-    if (EnumDisplaySettings(nullptr, ENUM_CURRENT_SETTINGS, &dm) == 0)
-    {
-        Logger::GetInstance().Log(Logger::Level::Error, "Failed to retrieve display settings!");
+	if (EnumDisplaySettings(nullptr, ENUM_CURRENT_SETTINGS, &dm) == 0)
+	{
+		Logger::Error("Failed to retrieve display settings!");
 
-        return 60;
-    }
+		return 60;
+	}
 
-    return dm.dmDisplayFrequency;
+	return dm.dmDisplayFrequency;
 }

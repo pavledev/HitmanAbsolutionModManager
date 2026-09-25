@@ -3,7 +3,6 @@
 #include <d3d11.h>
 
 #include "SwapChain.h"
-#include "Logger.h"
 
 class DirectXRenderer
 {

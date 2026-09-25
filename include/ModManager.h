@@ -28,7 +28,24 @@ public:
 	};
 
 	~ModManager();
+
 	static ModManager& GetInstance();
+
+	const ImGuiRenderer& GetImGuiRenderer() const
+	{
+		return imGuiRenderer;
+	}
+
+	const ModSelector& GetModSelector() const
+	{
+		return modSelector;
+	}
+
+	Console& GetConsole()
+	{
+		return console;
+	}
+
 	bool Setup();
 	void Start();
 	void Render();
@@ -41,9 +58,6 @@ public:
 	void GetModInfo(Mod& mod, const std::filesystem::path& manifestJsonFileEntry);
 	std::map<std::string, Mod>& GetAvailableMods();
 	void AddMod(const std::string& modFilePath);
-
-	const ImGuiRenderer& GetImGuiRenderer() const;
-	const ModSelector& GetModSelector() const;
 
 	void GenerateResources(const std::filesystem::path& contentFolderPath);
 	void GenerateResource(std::vector<Resource>& resources, const std::filesystem::path& fileEntry);

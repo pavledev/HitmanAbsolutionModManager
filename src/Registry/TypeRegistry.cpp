@@ -3,7 +3,7 @@
 #include <rapidjson/istreamwrapper.h>
 
 #include "Registry/TypeRegistry.h"
-#include "Logger.h"
+#include "Logging.h"
 
 TypeRegistry::~TypeRegistry()
 {
@@ -15,9 +15,9 @@ TypeRegistry::~TypeRegistry()
 
 TypeRegistry& TypeRegistry::GetInstance()
 {
-    static TypeRegistry instance;
+	static TypeRegistry instance;
 
-    return instance;
+	return instance;
 }
 
 void TypeRegistry::Load()
@@ -52,19 +52,19 @@ void TypeRegistry::Load()
 		typeIDs.insert(std::make_pair(typeName, typeID));
 	}
 
-	Logger::GetInstance().Log(Logger::Level::Info, "Sucessfully loaded type ids.");
+	Logger::Info("Sucessfully loaded type ids.");
 }
 
 STypeID* TypeRegistry::GetTypeID(const std::string& typeName) const
 {
-    auto it = typeIDs.find(typeName);
+	auto it = typeIDs.find(typeName);
 
-    if (it != typeIDs.end())
-    {
-        return it->second;
-    }
+	if (it != typeIDs.end())
+	{
+		return it->second;
+	}
 
-    return nullptr;
+	return nullptr;
 }
 
 void TypeRegistry::RegisterType(STypeID* typeID)

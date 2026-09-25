@@ -7,8 +7,7 @@
 #include <IconsMaterialDesign.h>
 
 #include <Rendering/ImGuiRenderer.h>
-#include <Logger.h>
-#include <filesystem>
+#include <Logging.h>
 
 bool ImGuiRenderer::Setup(ID3D11Device* d3dDevice, ID3D11DeviceContext* d3dDeviceContext, HWND hwnd)
 {
@@ -60,7 +59,7 @@ bool ImGuiRenderer::Setup(ID3D11Device* d3dDevice, ID3D11DeviceContext* d3dDevic
 	AddFonts();
 	SetScale();
 
-	Logger::GetInstance().Log(Logger::Level::Info, "ImGui renderer successfully set up.");
+	Logger::Info("ImGui renderer successfully set up.");
 
 	return true;
 }
