@@ -2,7 +2,17 @@
     "name": "hitmanabsolutionmodmanager",
     "version": "1.0.0",
     "dependencies": [
-        "rapidjson",
-        "libzippp"
+      {
+          "name": "imgui",
+          "features": [
+            "docking-experimental",
+            "dx11-binding",
+            "win32-binding",
+            "wchar32",
+            "freetype"
+          ]
+      },
+      "rapidjson",
+      "libzippp"
     ]
 }

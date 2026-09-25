@@ -255,7 +255,7 @@ void Console::RenderTable(const std::vector<Logger::Message>& messages)
 
 				sprintf_s(label, "%d", message->id);
 
-				ImGuiSelectableFlags selectableFlags = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap;
+				ImGuiSelectableFlags selectableFlags = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap;
 
 				ImGui::PushStyleColor(ImGuiCol_Text, textColor);
 

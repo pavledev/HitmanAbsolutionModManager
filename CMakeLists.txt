@@ -6,8 +6,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(GAME_INSTALL_PATH "" CACHE PATH "Path of Hitman Absolution folder.")
 set(VCPKG_BUILD_ROOT "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
 
-add_subdirectory(External/imgui-docking)
-
+find_package(imgui CONFIG REQUIRED)
 find_package(RapidJSON REQUIRED)
 find_package(libzippp REQUIRED)
 
@@ -41,7 +40,7 @@ target_include_directories(HitmanAbsolutionModManager PUBLIC
 target_link_libraries(HitmanAbsolutionModManager PUBLIC
 	d3d11
 	dxgi
-	imgui-docking
+	imgui::imgui
 	rapidjson
 	libzippp::libzippp
 )
